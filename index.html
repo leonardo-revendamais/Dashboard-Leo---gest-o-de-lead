@@ -532,21 +532,39 @@ function escapeHtml(s){ return (s===null||s===undefined) ? '' : s.toString().rep
 
 /* ======================================================================
    STORAGE
+   Persistência via localStorage do navegador (funciona em qualquer host,
+   diferente de window.storage que só existe dentro do Claude.ai Artifacts).
+   Fica salvo por navegador/dispositivo — não é compartilhado entre usuários.
 ====================================================================== */
 const INDEX_KEY = 'snapshots-index';
+const LS_PREFIX = 'rm-carteira:';
+
+function lsRead(key){
+  try{ return localStorage.getItem(LS_PREFIX + key); }
+  catch(e){ console.error('Falha ao ler do localStorage', e); return null; }
+}
+function lsWrite(key, value){
+  try{ localStorage.setItem(LS_PREFIX + key, value); return true; }
+  catch(e){ console.error('Falha ao gravar no localStorage', e); return false; }
+}
+function lsRemove(key){
+  try{ localStorage.removeItem(LS_PREFIX + key); }
+  catch(e){ console.error('Falha ao remover do localStorage', e); }
+}
 
 async function loadIndex(){
-  try{
-    const r = await window.storage.get(INDEX_KEY, false);
-    return r ? JSON.parse(r.value) : [];
-  }catch(e){ return []; }
+  const raw = lsRead(INDEX_KEY);
+  try{ return raw ? JSON.parse(raw) : []; }catch(e){ return []; }
 }
 async function saveIndex(idx){
-  try{ await window.storage.set(INDEX_KEY, JSON.stringify(idx), false); }catch(e){ console.error('storage error', e); }
+  lsWrite(INDEX_KEY, JSON.stringify(idx));
 }
 async function saveSnapshot(dateStr, rows, filename){
   const key = 'snapshot:' + dateStr;
-  await window.storage.set(key, JSON.stringify(rows), false);
+  const ok = lsWrite(key, JSON.stringify(rows));
+  if(!ok){
+    throw new Error('Não foi possível salvar a base: o armazenamento local do navegador está cheio ou indisponível. Tente remover atualizações antigas no histórico e importe novamente.');
+  }
   let idx = await loadIndex();
   idx = idx.filter(e => e.date !== dateStr); // replace if same ref date re-imported
   idx.push({ date: dateStr, filename, count: rows.length, importedAt: new Date().toISOString() });
@@ -555,13 +573,11 @@ async function saveSnapshot(dateStr, rows, filename){
   return idx;
 }
 async function loadSnapshot(dateStr){
-  try{
-    const r = await window.storage.get('snapshot:' + dateStr, false);
-    return r ? JSON.parse(r.value) : [];
-  }catch(e){ return []; }
+  const raw = lsRead('snapshot:' + dateStr);
+  try{ return raw ? JSON.parse(raw) : []; }catch(e){ return []; }
 }
 async function deleteSnapshot(dateStr){
-  try{ await window.storage.delete('snapshot:' + dateStr, false); }catch(e){ /* already gone or never existed */ }
+  lsRemove('snapshot:' + dateStr);
   let idx = await loadIndex();
   idx = idx.filter(e => e.date !== dateStr);
   await saveIndex(idx);
@@ -595,6 +611,30 @@ function processRow(raw, map, refDateFallback){
   let refDate = toDate(get('data_ref'));
   if(!refDate) refDate = refDateFallback;
   return { lead, responsavel, ultima, proximo, statusFup, statusLead, refDate };
+}
+
+// Regra de não-duplicação: mesma combinação normalizada de lead + responsável
+// não pode aparecer mais de uma vez na mesma importação. Quando há duplicidade,
+// mantém apenas o registro com a interação (última) mais recente — se nenhum
+// dos registros tiver data de última interação, mantém o último lido da planilha.
+function dedupeRows(rows){
+  const groups = {};
+  rows.forEach(r => {
+    const k = norm(r.lead) + '|' + norm(r.responsavel);
+    (groups[k] || (groups[k] = [])).push(r);
+  });
+  const deduped = [];
+  let removed = 0;
+  Object.values(groups).forEach(group => {
+    if(group.length === 1){ deduped.push(group[0]); return; }
+    removed += group.length - 1;
+    let best = group[0];
+    group.forEach(r => {
+      if(r.ultima && (!best.ultima || new Date(r.ultima) > new Date(best.ultima))) best = r;
+    });
+    deduped.push(best);
+  });
+  return { rows: deduped, removed };
 }
 
 function buildSnapshotStats(rows, refDate){
@@ -1056,24 +1096,19 @@ function processUpload(rawRows, map, filename){
     if(best) refDateGuess = best;
   }
 
-  // duplicates: same lead + responsavel appearing more than once
-  const seen = {};
-  let dup = 0;
-  rows.forEach(r => {
-    const k = norm(r.lead)+'|'+norm(r.responsavel);
-    seen[k] = (seen[k]||0)+1;
-  });
-  Object.values(seen).forEach(c => { if(c>1) dup += (c-1); });
+  // duplicates: same lead + responsavel appearing more than once — removidos automaticamente,
+  // mantendo o registro com a interação (última) mais recente
+  const { rows: dedupedRows, removed: dup } = dedupeRows(rows);
 
   const msgs = [];
   let ok = true;
   if(missingCols.length){ msgs.push(`Coluna(s) obrigatória(s) não encontrada(s): ${missingCols.join(', ')}.`); ok = false; }
   if(semResponsavel>0){ msgs.push(`${semResponsavel} lead(s) sem responsável definido.`); }
   if(invalidUltima>0){ msgs.push(`${invalidUltima} data(s) de última interação não puderam ser interpretadas.`); }
-  if(dup>0){ msgs.push(`${dup} registro(s) duplicado(s) (mesmo lead + mesmo responsável).`); }
+  if(dup>0){ msgs.push(`${dup} registro(s) duplicado(s) (mesmo lead + mesmo responsável) — removido(s) automaticamente, mantendo o registro com a interação mais recente.`); }
   if(!map.data_ref){ msgs.push('Coluna "Data de Referência" não encontrada — informe a data manualmente abaixo.'); }
 
-  state.pendingRows = rows;
+  state.pendingRows = dedupedRows;
   state.pendingFilename = filename;
   state.pendingRefGuess = refDateGuess;
 
@@ -1106,16 +1141,22 @@ document.getElementById('confirmImportBtn').addEventListener('click', async () =
   const btn = document.getElementById('confirmImportBtn');
   btn.textContent = 'Atualizando…'; btn.disabled = true;
 
-  state.index = await saveSnapshot(refDate, rowsWithRef, state.pendingFilename);
-  renderHistoryTable();
+  try{
+    state.index = await saveSnapshot(refDate, rowsWithRef, state.pendingFilename);
+    renderHistoryTable();
 
-  state.pendingRows = null;
-  document.getElementById('refDateRow').style.display = 'none';
-  document.getElementById('validationOutput').innerHTML = `<div class="validation-box validation-ok">✓ Base atualizada com sucesso para ${fmtDate(new Date(refDate))}.</div>`;
-  btn.textContent = 'Atualizar Dashboard'; btn.disabled = false;
+    state.pendingRows = null;
+    document.getElementById('refDateRow').style.display = 'none';
+    document.getElementById('validationOutput').innerHTML = `<div class="validation-box validation-ok">✓ Base atualizada com sucesso para ${fmtDate(new Date(refDate))}.</div>`;
 
-  await boot();
-  goTo('geral');
+    await boot();
+    goTo('geral');
+  }catch(err){
+    console.error('Erro ao atualizar a base', err);
+    document.getElementById('validationOutput').innerHTML = `<div class="validation-box validation-err">⚠️ Não foi possível atualizar a base. ${escapeHtml(err && err.message ? err.message : 'Tente novamente.')}</div>`;
+  }finally{
+    btn.textContent = 'Atualizar Dashboard'; btn.disabled = false;
+  }
 });
 
 boot();
