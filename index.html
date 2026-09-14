@@ -441,6 +441,7 @@ const FIELD_ALIASES = {
   proximo_fup: ['proximo follow-up','proximo followup','proximo fup','data proximo follow-up','data do proximo follow-up','proximo contato','proxima'],
   status_fup: ['status do follow-up','status followup','status fup'],
   status_lead: ['status do lead','status','conversa'],
+  conversao: ['conversao','status de conversao','status da conversao','resultado da negociacao'],
   data_ref: ['data de referencia','data referencia','data_referencia','data ref']
 };
 
@@ -604,9 +605,10 @@ function processRow(raw, map, refDateFallback){
   const proximo = toDate(get('proximo_fup'));
   const statusFup = norm(get('status_fup'));
   const statusLead = (get('status_lead')||'').toString();
+  const conversao = (get('conversao')||'').toString();
   let refDate = toDate(get('data_ref'));
   if(!refDate) refDate = refDateFallback;
-  return { lead, responsavel, ultima, proximo, statusFup, statusLead, refDate };
+  return { lead, responsavel, ultima, proximo, statusFup, statusLead, conversao, refDate };
 }
 
 // Regra de não-duplicação: mesma combinação normalizada de lead + responsável
@@ -1079,9 +1081,21 @@ function processUpload(rawRows, map, filename){
   if(!map.responsavel) missingCols.push('Responsável');
   // data_ref is checked after fallback logic below
 
-  const rows = rawRows.map(r => processRow(r, map, null));
+  const allRows = rawRows.map(r => processRow(r, map, null));
+
+  // Remove leads "Ganhos" (fechados por venda) — o dashboard acompanha apenas carteira em
+  // aberto ou perdida, então esses registros são descartados antes de qualquer outro cálculo.
+  const keptIdx = [];
+  const rows = [];
+  allRows.forEach((r, i) => {
+    if(norm(r.conversao).includes('ganho')) return;
+    keptIdx.push(i);
+    rows.push(r);
+  });
+  const ganhosRemovidos = allRows.length - rows.length;
+
   const semResponsavel = rows.filter(r => !r.responsavel).length;
-  const invalidUltima = rawRows.filter((r,i) => map.ultima_interacao && r[map.ultima_interacao] && !rows[i].ultima).length;
+  const invalidUltima = keptIdx.filter((i,j) => map.ultima_interacao && rawRows[i][map.ultima_interacao] && !rows[j].ultima).length;
 
   // detect data de referência: use column if present, else most common date, else ask user
   let refDateGuess = null;
@@ -1101,6 +1115,7 @@ function processUpload(rawRows, map, filename){
   if(missingCols.length){ msgs.push(`Coluna(s) obrigatória(s) não encontrada(s): ${missingCols.join(', ')}.`); ok = false; }
   if(semResponsavel>0){ msgs.push(`${semResponsavel} lead(s) sem responsável definido.`); }
   if(invalidUltima>0){ msgs.push(`${invalidUltima} data(s) de última interação não puderam ser interpretadas.`); }
+  if(ganhosRemovidos>0){ msgs.push(`${ganhosRemovidos} lead(s) com conversão "Ganho" foram desconsiderados — o dashboard acompanha apenas carteira em aberto ou perdida.`); }
   if(dup>0){ msgs.push(`${dup} registro(s) duplicado(s) (mesmo lead + mesmo responsável) — removido(s) automaticamente, mantendo o registro com a interação mais recente.`); }
   // Coluna "Data de Referência" raramente existe nas exportações desse CRM — o campo de
   // data manual abaixo já cobre esse caso sempre, então não vale a pena avisar sobre isso.
