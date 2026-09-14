@@ -491,7 +491,17 @@ function mapHeaders(sampleRow){
 
 function toDate(val){
   if(val === null || val === undefined || val === '') return null;
-  if(val instanceof Date && !isNaN(val)) return val;
+  if(val instanceof Date && !isNaN(val)){
+    // Algumas exportações desse CRM salvam parte das datas como valor nativo do Excel
+    // formatado em mês/dia (padrão americano) em vez de dia/mês. Quando o dia é <=12
+    // (ambíguo entre os dois formatos), o Excel consegue "converter" o texto original
+    // assumindo mês/dia — invertendo silenciosamente dia e mês. Corrige isso aqui.
+    const day = val.getDate(), month1 = val.getMonth()+1;
+    if(day <= 12){
+      return new Date(val.getFullYear(), day-1, month1, val.getHours(), val.getMinutes(), val.getSeconds());
+    }
+    return val;
+  }
   if(typeof val === 'number'){
     // excel serial date
     const d = XLSX.SSF.parse_date_code(val);
