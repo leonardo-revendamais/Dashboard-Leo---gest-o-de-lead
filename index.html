@@ -459,6 +459,7 @@ function decodeRowEntities(row){
 const FIELD_ALIASES = {
   lead: ['lead/cliente','lead cliente','lead','cliente','nome'],
   responsavel: ['responsavel','vendedor','comercial','atendente','sdr','consultor','consultora','executivo','executivo de vendas'],
+  telefone: ['telefone','celular','whatsapp','contato','fone'],
   ultima_interacao: ['ultima interacao','data ultima interacao','data da ultima interacao','ultima','data da ultima','ultimo contato','data ultimo contato'],
   tipo_interacao: ['tipo da ultima interacao','tipo interacao','motivo'],
   proximo_fup: ['proximo follow-up','proximo followup','proximo fup','data proximo follow-up','data do proximo follow-up','proximo contato','proxima'],
@@ -613,6 +614,7 @@ async function loadSnapshot(dateStr){
       if(typeof r.responsavel === 'string') r.responsavel = decodeHtmlEntities(r.responsavel);
       if(typeof r.statusLead === 'string') r.statusLead = decodeHtmlEntities(r.statusLead);
       if(typeof r.conversao === 'string') r.conversao = decodeHtmlEntities(r.conversao);
+      if(typeof r.telefone === 'string') r.telefone = decodeHtmlEntities(r.telefone);
     });
     return rows;
   }catch(e){ return []; }
@@ -645,6 +647,7 @@ function processRow(raw, map, refDateFallback){
   const get = f => map[f] ? raw[map[f]] : undefined;
   const lead = get('lead');
   const responsavel = (get('responsavel')||'').toString().trim();
+  const telefone = (get('telefone')||'').toString();
   const ultima = toDate(get('ultima_interacao'));
   const proximo = toDate(get('proximo_fup'));
   const statusFup = norm(get('status_fup'));
@@ -652,17 +655,20 @@ function processRow(raw, map, refDateFallback){
   const conversao = (get('conversao')||'').toString();
   let refDate = toDate(get('data_ref'));
   if(!refDate) refDate = refDateFallback;
-  return { lead, responsavel, ultima, proximo, statusFup, statusLead, conversao, refDate };
+  return { lead, responsavel, telefone, ultima, proximo, statusFup, statusLead, conversao, refDate };
 }
 
-// Regra de não-duplicação: mesma combinação normalizada de lead + responsável
-// não pode aparecer mais de uma vez na mesma importação. Quando há duplicidade,
-// mantém apenas o registro com a interação (última) mais recente — se nenhum
+function normPhone(s){ return (s||'').toString().replace(/\D/g,''); }
+
+// Regra de não-duplicação: mesma combinação normalizada de lead + responsável + telefone
+// não pode aparecer mais de uma vez na mesma importação (as três precisam bater — um mesmo
+// nome de cliente com telefones diferentes conta como leads distintos). Quando há
+// duplicidade, mantém apenas o registro com a interação (última) mais recente — se nenhum
 // dos registros tiver data de última interação, mantém o último lido da planilha.
 function dedupeRows(rows){
   const groups = {};
   rows.forEach(r => {
-    const k = norm(r.lead) + '|' + norm(r.responsavel);
+    const k = norm(r.lead) + '|' + norm(r.responsavel) + '|' + normPhone(r.telefone);
     (groups[k] || (groups[k] = [])).push(r);
   });
   const deduped = [];
@@ -1169,7 +1175,7 @@ function processUpload(rawRows, map, filename){
   if(semResponsavel>0){ msgs.push(`${semResponsavel} lead(s) sem responsável definido.`); }
   if(invalidUltima>0){ msgs.push(`${invalidUltima} data(s) de última interação não puderam ser interpretadas.`); }
   if(ganhosRemovidos>0){ msgs.push(`${ganhosRemovidos} lead(s) com conversão "Ganho" foram desconsiderados — o dashboard acompanha apenas carteira em aberto ou perdida.`); }
-  if(dup>0){ msgs.push(`${dup} registro(s) duplicado(s) (mesmo lead + mesmo responsável) — removido(s) automaticamente, mantendo o registro com a interação mais recente.`); }
+  if(dup>0){ msgs.push(`${dup} registro(s) duplicado(s) (mesmo lead + mesmo responsável + mesmo telefone) — removido(s) automaticamente, mantendo o registro com a interação mais recente.`); }
   // Coluna "Data de Referência" raramente existe nas exportações desse CRM — o campo de
   // data manual abaixo já cobre esse caso sempre, então não vale a pena avisar sobre isso.
 
