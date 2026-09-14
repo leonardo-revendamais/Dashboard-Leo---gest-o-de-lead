@@ -765,7 +765,7 @@ function renderKpiGrid(stats){
   const t = stats.totals;
   const covClass = coberturaClass(t.coberturaGeral);
   document.getElementById('kpiGrid').innerHTML = `
-    ${kpiCard('Carteira total', t.totalLeads, '')}
+    ${kpiCard('Total de Leads', t.totalLeads, '')}
     ${kpiCard('Clientes trabalhados', t.totalTrabalhados, `${pct(t.totalTrabalhados,t.totalLeads)}% da carteira`)}
     ${kpiCard('Cobertura geral', t.coberturaGeral+'%', '', covClass)}
     ${kpiCard('Sem interação', t.totalSemInteracao, '')}
