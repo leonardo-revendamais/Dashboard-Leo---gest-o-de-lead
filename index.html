@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gestão da Carteira Comercial — Revenda Mais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --red:#E22446;
+    --red-dark:#B81C3A;
+    --black:#111111;
+    --white:#FFFFFF;
+    --gray-50:#F5F5F5;
+    --gray-100:#EFEFEF;
+    --gray-400:#9A9A9A;
+    --gray-600:#5E5E5E;
+    --green:#1E8E5A;
+    --green-bg:#E8F5EE;
+    --amber:#B8860B;
+    --amber-bg:#FBF3DF;
+    --red-bg:#FCE7EA;
+    --sidebar-w:216px;
+    --radius:10px;
+    --font-display:'Sora', sans-serif;
+    --font-body:'Poppins', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font-body);
+    background:var(--gray-50);
+    color:var(--black);
+    -webkit-font-smoothing:antialiased;
+    font-size:14px;
+  }
+  ::selection{background:var(--red);color:white;}
+
+  /* ---------- layout shell ---------- */
+  .shell{display:flex;min-height:100vh;}
+
+  .sidebar{
+    width:var(--sidebar-w);
+    background:var(--black);
+    color:white;
+    flex-shrink:0;
+    display:flex;
+    flex-direction:column;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .brand{
+    display:flex;align-items:center;gap:10px;
+    padding:22px 20px 18px 20px;
+  }
+  .brand-mark{
+    width:30px;height:30px;border-radius:8px;
+    background:var(--red);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-weight:800;font-size:15px;color:white;
+    flex-shrink:0;
+  }
+  .brand-text{font-family:var(--font-display);font-weight:700;font-size:14.5px;letter-spacing:0.2px;line-height:1.15;}
+  .brand-text small{display:block;font-family:var(--font-body);font-weight:400;font-size:10.5px;color:#9c9c9c;margin-top:2px;}
+
+  nav.nav{padding:10px 10px;display:flex;flex-direction:column;gap:2px;margin-top:6px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 12px;border-radius:8px;
+    color:#c9c9c9;font-size:13.5px;font-weight:500;
+    cursor:pointer;border-left:3px solid transparent;
+    transition:background .15s ease, color .15s ease;
+  }
+  .nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.85;}
+  .nav-item:hover{background:#1c1c1c;color:white;}
+  .nav-item.active{
+    background:#1c1c1c;color:white;
+    border-left:3px solid var(--red);
+  }
+
+  .sidebar-foot{
+    margin-top:auto;padding:16px 20px;
+    font-size:11px;color:#7a7a7a;line-height:1.5;
+    border-top:1px solid #262626;
+  }
+  .sidebar-foot .dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;}
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
+
+  .topbar{
+    background:white;border-bottom:1px solid var(--gray-100);
+    padding:16px 28px;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    position:sticky;top:0;z-index:5;
+  }
+  .topbar h1{font-family:var(--font-display);font-size:19px;margin:0 0 2px 0;font-weight:700;}
+  .topbar p{margin:0;color:var(--gray-600);font-size:12.5px;}
+  .topbar-right{display:flex;align-items:center;gap:10px;}
+
+  select.filter{
+    font-family:var(--font-body);
+    border:1px solid var(--gray-100);background:var(--gray-50);
+    padding:9px 12px;border-radius:8px;font-size:13px;color:var(--black);
+    min-width:170px; cursor:pointer;
+  }
+  .badge-update{
+    font-size:11.5px;color:var(--gray-600);background:var(--gray-50);
+    border:1px solid var(--gray-100); padding:7px 11px;border-radius:8px;
+    white-space:nowrap;
+  }
+  .btn{
+    font-family:var(--font-body);font-weight:600;font-size:13px;
+    padding:9px 16px;border-radius:8px;border:none;cursor:pointer;
+    transition:opacity .15s ease;
+  }
+  .btn:hover{opacity:.88;}
+  .btn-primary{background:var(--red);color:white;}
+  .btn-dark{background:var(--black);color:white;}
+  .btn-ghost{background:var(--gray-50);color:var(--black);border:1px solid var(--gray-100);}
+
+  .content{padding:24px 28px 60px 28px;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  .empty-state{
+    background:white;border:1px dashed var(--gray-100);border-radius:var(--radius);
+    padding:48px 24px;text-align:center;color:var(--gray-600);
+  }
+  .empty-state h3{font-family:var(--font-display);color:var(--black);margin:0 0 6px 0;font-size:16px;}
+  .empty-state p{margin:0 0 18px 0;font-size:13px;}
+
+  /* ---------- KPI cards ---------- */
+  .kpi-grid{
+    display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px;
+  }
+  .kpi-card{
+    background:white;border:1px solid var(--gray-100);border-radius:var(--radius);
+    padding:16px 16px;
+  }
+  .kpi-label{font-size:11.5px;color:var(--gray-600);font-weight:500;margin-bottom:8px;}
+  .kpi-value{font-family:var(--font-display);font-size:26px;font-weight:700;line-height:1;}
+  .kpi-value.accent{color:var(--red);}
+  .kpi-sub{font-size:11px;color:var(--gray-400);margin-top:6px;}
+
+  /* ---------- generic cards / grid ---------- */
+  .grid-2{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;align-items:start;}
+  .card{
+    background:white;border:1px solid var(--gray-100);border-radius:var(--radius);
+    padding:18px 18px;
+  }
+  .card h2{font-family:var(--font-display);font-size:14.5px;font-weight:700;margin:0 0 14px 0;}
+  .card h2 .muted{color:var(--gray-400);font-weight:400;font-size:11.5px;margin-left:6px;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{
+    text-align:left;font-size:10.5px;text-transform:none;color:var(--gray-600);
+    font-weight:600;padding:0 10px 10px 10px;border-bottom:1px solid var(--gray-100);
+  }
+  th.num, td.num{text-align:right;}
+  td{padding:11px 10px;border-bottom:1px solid var(--gray-50);}
+  tr:last-child td{border-bottom:none;}
+  tr.row-click{cursor:pointer;}
+  tr.row-click:hover td{background:var(--gray-50);}
+
+  .semaforo{display:inline-flex;align-items:center;gap:6px;font-weight:600;}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
+  .dot-green{background:var(--green);}
+  .dot-amber{background:var(--amber);}
+  .dot-red{background:var(--red);}
+  .txt-green{color:var(--green);}
+  .txt-amber{color:var(--amber);}
+  .txt-red{color:var(--red);}
+
+  .pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;}
+  .pill-green{background:var(--green-bg);color:var(--green);}
+  .pill-amber{background:var(--amber-bg);color:var(--amber);}
+  .pill-red{background:var(--red-bg);color:var(--red);}
+
+  .row-actions{display:flex;align-items:center;gap:10px;}
+  .btn-remove{
+    font-family:var(--font-body);font-size:11.5px;font-weight:600;
+    color:var(--red);background:none;border:none;cursor:pointer;padding:4px 6px;
+    border-radius:6px;
+  }
+  .btn-remove:hover{background:var(--red-bg);}
+
+  .alert-list{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;}
+  .alert-item{display:flex;gap:10px;font-size:12.5px;line-height:1.5;padding:10px 12px;border-radius:8px;background:var(--gray-50);}
+  .alert-item .dot{margin-top:5px;}
+
+  /* ---------- individual screen ---------- */
+  .indiv-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;}
+  .indiv-header h2{font-family:var(--font-display);font-size:22px;margin:0;font-weight:700;}
+  .indiv-header .indiv-sub{font-size:12.5px;color:var(--gray-600);}
+
+  .situacao-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 20px 0;}
+  .situacao-card{border-radius:var(--radius);padding:16px;text-align:left;}
+  .situacao-card .num{font-family:var(--font-display);font-size:24px;font-weight:700;}
+  .situacao-card .lbl{font-size:11.5px;font-weight:600;margin-top:4px;}
+  .sit-green{background:var(--green-bg);} .sit-green .num,.sit-green .lbl{color:var(--green);}
+  .sit-amber{background:var(--amber-bg);} .sit-amber .num,.sit-amber .lbl{color:var(--amber);}
+  .sit-red{background:var(--red-bg);} .sit-red .num,.sit-red .lbl{color:var(--red);}
+
+  /* ---------- evolução ---------- */
+  .compare-row{display:flex;gap:14px;margin-bottom:16px;}
+  .compare-card{flex:1;background:white;border:1px solid var(--gray-100);border-radius:var(--radius);padding:16px;}
+  .compare-card .lbl{font-size:11.5px;color:var(--gray-600);margin-bottom:8px;}
+  .compare-vals{display:flex;align-items:baseline;gap:10px;}
+  .compare-vals .from{font-size:14px;color:var(--gray-400);text-decoration:line-through;}
+  .compare-vals .to{font-family:var(--font-display);font-size:22px;font-weight:700;}
+  .delta{font-size:12px;font-weight:700;padding:2px 8px;border-radius:20px;}
+  .delta.up{background:var(--green-bg);color:var(--green);}
+  .delta.down{background:var(--red-bg);color:var(--red);}
+  .delta.flat{background:var(--gray-100);color:var(--gray-600);}
+
+  /* ---------- upload screen ---------- */
+  .dropzone{
+    border:1.5px dashed var(--gray-100);border-radius:var(--radius);
+    background:white; padding:32px; text-align:center; cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .dropzone.drag{border-color:var(--red); background:var(--red-bg);}
+  .dropzone svg{width:30px;height:30px;color:var(--gray-400);margin-bottom:10px;}
+  .dropzone h3{font-family:var(--font-display);font-size:14.5px;margin:0 0 4px 0;}
+  .dropzone p{margin:0;font-size:12.5px;color:var(--gray-600);}
+  .dropzone input{display:none;}
+
+  .steps-row{display:flex;gap:10px;margin:16px 0;}
+  .step{flex:1;background:var(--gray-50);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--gray-600);}
+  .step b{display:block;color:var(--black);font-size:13px;margin-bottom:2px;font-family:var(--font-body);}
+
+  .field-row{display:flex;gap:12px;align-items:flex-end;margin:16px 0;}
+  .field{flex:1;}
+  .field label{display:block;font-size:11.5px;color:var(--gray-600);margin-bottom:6px;font-weight:500;}
+  .field input[type=date], .field input[type=text]{
+    width:100%;padding:9px 11px;border:1px solid var(--gray-100);border-radius:8px;font-family:var(--font-body);font-size:13px;
+  }
+
+  .validation-box{border-radius:8px;padding:13px 14px;font-size:12.5px;margin-top:14px;line-height:1.6;}
+  .validation-ok{background:var(--green-bg);color:var(--green);}
+  .validation-warn{background:var(--amber-bg);color:#8a6a04;}
+  .validation-err{background:var(--red-bg);color:var(--red);}
+
+  /* ---------- chart ---------- */
+  .chart-wrap{margin-top:6px;}
+  .chart-legend{display:flex;gap:16px;margin-bottom:10px;font-size:12px;color:var(--gray-600);}
+  .chart-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .chart-legend .sw{width:10px;height:10px;border-radius:2px;}
+
+  @media (max-width:980px){
+    .kpi-grid{grid-template-columns:repeat(3,1fr);}
+    .grid-2{grid-template-columns:1fr;}
+    .situacao-grid{grid-template-columns:1fr;}
+    .sidebar{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RM</div>
+      <div class="brand-text">Revenda Mais<small>Gestão da Carteira</small></div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" data-tab="geral">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Visão Geral
+      </div>
+      <div class="nav-item" data-tab="individual">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.3"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
+        Visão Individual
+      </div>
+      <div class="nav-item" data-tab="evolucao">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5"/><path d="M4 15l5-5 4 4 7-8"/></svg>
+        Evolução
+      </div>
+      <div class="nav-item" data-tab="atualizar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+        Atualizar Base
+      </div>
+    </nav>
+    <div class="sidebar-foot" id="sidebarStatus">
+      <span class="dot"></span>Sem base carregada
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="pageTitle">Gestão da Carteira Comercial</h1>
+        <p id="pageSubtitle">Acompanhamento de atividade e cobertura da carteira</p>
+      </div>
+      <div class="topbar-right" id="topbarRight">
+        <select class="filter" id="comercialFilter">
+          <option value="__todos__">Todos os comerciais</option>
+        </select>
+        <span class="badge-update" id="updateBadge">Nenhuma atualização ainda</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- TELA 1 — VISÃO GERAL -->
+      <section class="tab-panel active" id="tab-geral">
+        <div id="geralEmpty" class="empty-state">
+          <h3>Nenhuma base carregada ainda</h3>
+          <p>Vá em "Atualizar Base" e importe a planilha semanal exportada do CRM para começar.</p>
+          <button class="btn btn-primary" onclick="goTo('atualizar')">Atualizar Base</button>
+        </div>
+        <div id="geralContent" style="display:none;">
+          <div class="kpi-grid" id="kpiGrid"></div>
+          <div class="grid-2">
+            <div class="card">
+              <h2>Ranking da equipe <span class="muted">cobertura da carteira por comercial</span></h2>
+              <table>
+                <thead>
+                  <tr><th>Comercial</th><th class="num">Carteira</th><th class="num">Trabalhados</th><th class="num">Sem interação</th><th class="num">FUP atrasados</th><th class="num">Cobertura</th></tr>
+                </thead>
+                <tbody id="rankingBody"></tbody>
+              </table>
+            </div>
+            <div class="card">
+              <h2>Pontos de atenção</h2>
+              <div class="alert-list" id="alertList"></div>
+              <h2 style="margin-top:4px;">Cobertura geral — últimas semanas</h2>
+              <div id="miniSpark"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TELA 2 — VISÃO INDIVIDUAL -->
+      <section class="tab-panel" id="tab-individual">
+        <div id="individualEmpty" class="empty-state">
+          <h3>Nenhuma base carregada ainda</h3>
+          <p>Importe a planilha semanal para visualizar o desempenho individual de cada comercial.</p>
+          <button class="btn btn-primary" onclick="goTo('atualizar')">Atualizar Base</button>
+        </div>
+        <div id="individualContent" style="display:none;">
+          <div class="card" style="margin-bottom:16px;">
+            <div class="indiv-header">
+              <h2 id="indivName">—</h2>
+              <span class="indiv-sub" id="indivRef"></span>
+            </div>
+            <div class="kpi-grid" id="indivKpiGrid" style="grid-template-columns:repeat(5,1fr);"></div>
+            <h2 style="margin-top:20px;">Situação da carteira</h2>
+            <div class="situacao-grid" id="situacaoGrid"></div>
+          </div>
+          <div class="card">
+            <h2>Clientes em atenção <span class="muted">críticos primeiro</span></h2>
+            <table>
+              <thead><tr><th>Cliente</th><th>Última interação</th><th class="num">Dias sem contato</th><th>Próximo FUP</th><th>Situação</th></tr></thead>
+              <tbody id="clientesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TELA 3 — EVOLUÇÃO -->
+      <section class="tab-panel" id="tab-evolucao">
+        <div id="evolucaoEmpty" class="empty-state">
+          <h3>Ainda não há histórico suficiente</h3>
+          <p>Importe pelo menos uma planilha semanal para começar a construir o histórico de evolução.</p>
+          <button class="btn btn-primary" onclick="goTo('atualizar')">Atualizar Base</button>
+        </div>
+        <div id="evolucaoContent" style="display:none;">
+          <div class="compare-row" id="compareRow"></div>
+          <div class="card">
+            <h2 id="evoTitle">Evolução da cobertura</h2>
+            <div class="chart-wrap" id="chartWrap"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TELA 4 — ATUALIZAR BASE -->
+      <section class="tab-panel" id="tab-atualizar">
+        <div class="card" style="margin-bottom:16px;">
+          <h2>Atualizar base</h2>
+          <p style="margin:-6px 0 14px 0;color:var(--gray-600);font-size:12.5px;">Exporte a base completa do CRM em Excel e carregue o arquivo nesta área. A planilha deve conter todos os leads/clientes da equipe e a coluna <b>Responsável</b> para identificação automática do comercial.</p>
+
+          <div class="dropzone" id="dropzone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+            <h3 id="dzTitle">Arraste a planilha aqui ou clique para selecionar</h3>
+            <p>Arquivos .xlsx ou .xls</p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" />
+          </div>
+
+          <div class="steps-row">
+            <div class="step"><b>1. Exportar do CRM</b>base completa da equipe</div>
+            <div class="step"><b>2. Adicionar a planilha</b>arraste ou selecione o arquivo</div>
+            <div class="step"><b>3. Validar Data de Referência</b>confira a data desta exportação</div>
+            <div class="step"><b>4. Atualizar o Dashboard</b>indicadores recalculados na hora</div>
+          </div>
+
+          <div class="field-row" id="refDateRow" style="display:none;">
+            <div class="field">
+              <label>Data de referência desta exportação</label>
+              <input type="date" id="refDateInput" />
+            </div>
+            <div class="field" style="flex:0 0 auto;">
+              <button class="btn btn-primary" id="confirmImportBtn">Atualizar Dashboard</button>
+            </div>
+          </div>
+
+          <div id="validationOutput"></div>
+        </div>
+
+        <div class="card">
+          <h2>Histórico de atualizações</h2>
+          <table>
+            <thead><tr><th>Data de referência</th><th>Arquivo</th><th class="num">Registros</th><th>Status</th><th></th></tr></thead>
+            <tbody id="historyBody"><tr><td colspan="5" style="color:var(--gray-400);">Nenhuma importação registrada ainda.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ======================================================================
+   CONFIG / THRESHOLDS (facilmente ajustáveis)
+====================================================================== */
+const THRESH = {
+  coberturaOk: 90,      // >=90 verde
+  coberturaAtencao: 75, // 75-89 amarelo, <75 vermelho
+  clienteOkDias: 7,     // interação <=7 dias = em dia (também define "trabalhado")
+  clienteAtencaoDias: 14 // 8-14 = atenção, >14 = crítico
+};
+
+/* ======================================================================
+   HELPERS
+====================================================================== */
+function stripAccents(s){ return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function norm(s){ return stripAccents(s).toLowerCase().trim().replace(/\s+/g,' '); }
+
+const FIELD_ALIASES = {
+  lead: ['lead/cliente','lead cliente','lead','cliente','nome'],
+  responsavel: ['responsavel','vendedor','comercial','atendente','sdr','consultor','consultora','executivo','executivo de vendas'],
+  ultima_interacao: ['ultima interacao','data ultima interacao','data da ultima interacao','ultima','data da ultima','ultimo contato','data ultimo contato'],
+  tipo_interacao: ['tipo da ultima interacao','tipo interacao','motivo'],
+  proximo_fup: ['proximo follow-up','proximo followup','proximo fup','data proximo follow-up','data do proximo follow-up','proximo contato','proxima'],
+  status_fup: ['status do follow-up','status followup','status fup'],
+  status_lead: ['status do lead','status','conversa'],
+  data_ref: ['data de referencia','data referencia','data_referencia','data ref']
+};
+
+function mapHeaders(sampleRow){
+  const headers = Object.keys(sampleRow);
+  const normHeaders = headers.map(h => ({ raw:h, n:norm(h) }));
+  const map = {};
+  for(const field in FIELD_ALIASES){
+    let found = null;
+    for(const alias of FIELD_ALIASES[field]){
+      const exact = normHeaders.find(h => h.n === alias);
+      if(exact){ found = exact.raw; break; }
+    }
+    if(!found){
+      for(const alias of FIELD_ALIASES[field]){
+        const partial = normHeaders.find(h => h.n.includes(alias));
+        if(partial){ found = partial.raw; break; }
+      }
+    }
+    map[field] = found;
+  }
+  return map;
+}
+
+function toDate(val){
+  if(val === null || val === undefined || val === '') return null;
+  if(val instanceof Date && !isNaN(val)) return val;
+  if(typeof val === 'number'){
+    // excel serial date
+    const d = XLSX.SSF.parse_date_code(val);
+    if(d) return new Date(d.y, d.m-1, d.d);
+    return null;
+  }
+  const str = val.toString().trim();
+  // dd/mm/yyyy
+  let m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if(m){
+    let [,dd,mm,yyyy] = m;
+    if(yyyy.length===2) yyyy = '20'+yyyy;
+    const d = new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd));
+    return isNaN(d) ? null : d;
+  }
+  // yyyy-mm-dd
+  m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m){
+    const [,yyyy,mm,dd] = m;
+    const d = new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd));
+    return isNaN(d) ? null : d;
+  }
+  const d = new Date(str);
+  return isNaN(d) ? null : d;
+}
+function fmtDate(d){
+  if(!d) return '—';
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}
+function dateKey(d){
+  if(!d) return null;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function daysBetween(a,b){
+  if(!a || !b) return null;
+  const ms = b.setHours(0,0,0,0) - a.setHours(0,0,0,0);
+  return Math.round(ms / 86400000);
+}
+function pct(n,d){ return d>0 ? Math.round((n/d)*100) : 0; }
+function coberturaClass(c){
+  if(c >= THRESH.coberturaOk) return 'green';
+  if(c >= THRESH.coberturaAtencao) return 'amber';
+  return 'red';
+}
+function clienteSituacao(dias){
+  if(dias === null) return 'red';
+  if(dias <= THRESH.clienteOkDias) return 'green';
+  if(dias <= THRESH.clienteAtencaoDias) return 'amber';
+  return 'red';
+}
+function situLabel(s){ return s==='green'?'Em dia':s==='amber'?'Atenção':'Crítico'; }
+function escapeHtml(s){ return (s===null||s===undefined) ? '' : s.toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ======================================================================
+   STORAGE
+====================================================================== */
+const INDEX_KEY = 'snapshots-index';
+
+async function loadIndex(){
+  try{
+    const r = await window.storage.get(INDEX_KEY, false);
+    return r ? JSON.parse(r.value) : [];
+  }catch(e){ return []; }
+}
+async function saveIndex(idx){
+  try{ await window.storage.set(INDEX_KEY, JSON.stringify(idx), false); }catch(e){ console.error('storage error', e); }
+}
+async function saveSnapshot(dateStr, rows, filename){
+  const key = 'snapshot:' + dateStr;
+  await window.storage.set(key, JSON.stringify(rows), false);
+  let idx = await loadIndex();
+  idx = idx.filter(e => e.date !== dateStr); // replace if same ref date re-imported
+  idx.push({ date: dateStr, filename, count: rows.length, importedAt: new Date().toISOString() });
+  idx.sort((a,b) => a.date < b.date ? 1 : -1); // desc
+  await saveIndex(idx);
+  return idx;
+}
+async function loadSnapshot(dateStr){
+  try{
+    const r = await window.storage.get('snapshot:' + dateStr, false);
+    return r ? JSON.parse(r.value) : [];
+  }catch(e){ return []; }
+}
+async function deleteSnapshot(dateStr){
+  try{ await window.storage.delete('snapshot:' + dateStr, false); }catch(e){ /* already gone or never existed */ }
+  let idx = await loadIndex();
+  idx = idx.filter(e => e.date !== dateStr);
+  await saveIndex(idx);
+  return idx;
+}
+
+/* ======================================================================
+   STATE
+====================================================================== */
+const state = {
+  index: [],          // [{date, filename, count, importedAt}] desc
+  current: null,       // {refDate, rows}
+  previous: null,       // {refDate, rows} - previous snapshot
+  series: [],           // full history for chart: [{date, coberturaByVendedor:{}, coberturaGeral}]
+  selected: '__todos__',
+  pendingRows: null,
+  pendingFilename: null
+};
+
+/* ======================================================================
+   AGGREGATION
+====================================================================== */
+function processRow(raw, map, refDateFallback){
+  const get = f => map[f] ? raw[map[f]] : undefined;
+  const lead = get('lead');
+  const responsavel = (get('responsavel')||'').toString().trim();
+  const ultima = toDate(get('ultima_interacao'));
+  const proximo = toDate(get('proximo_fup'));
+  const statusFup = norm(get('status_fup'));
+  const statusLead = (get('status_lead')||'').toString();
+  let refDate = toDate(get('data_ref'));
+  if(!refDate) refDate = refDateFallback;
+  return { lead, responsavel, ultima, proximo, statusFup, statusLead, refDate };
+}
+
+function buildSnapshotStats(rows, refDate){
+  const byVendedor = {};
+  let totalLeads=0, totalTrabalhados=0, totalSemInteracao=0, totalFupAtrasados=0, totalInteracoes=0;
+
+  rows.forEach(r => {
+    const vend = r.responsavel || '(sem responsável)';
+    if(!byVendedor[vend]) byVendedor[vend] = { leads:[] };
+    byVendedor[vend].leads.push(r);
+    totalLeads++;
+
+    const dias = r.ultima ? daysBetween(new Date(r.ultima), new Date(refDate)) : null;
+    const trabalhado = dias !== null && dias <= THRESH.clienteOkDias;
+    if(trabalhado) totalTrabalhados++; else totalSemInteracao++;
+    if(r.ultima) totalInteracoes++;
+
+    const fupDate = r.proximo ? new Date(r.proximo) : null;
+    const fupDone = r.statusFup.includes('conclu') || r.statusFup.includes('realizad');
+    if(fupDate && !fupDone && daysBetween(new Date(fupDate), new Date(refDate)) > 0) totalFupAtrasados++;
+  });
+
+  const vendedores = Object.keys(byVendedor).map(nome => {
+    const leads = byVendedor[nome].leads;
+    const carteira = leads.length;
+    let trabalhados=0, semInteracao=0, fupAtrasados=0, interacoes=0;
+    const clientes = leads.map(r => {
+      const dias = r.ultima ? daysBetween(new Date(r.ultima), new Date(refDate)) : null;
+      const sit = clienteSituacao(dias);
+      const trabalhado = dias !== null && dias <= THRESH.clienteOkDias;
+      if(trabalhado) trabalhados++; else semInteracao++;
+      if(r.ultima) interacoes++;
+      const fupDate = r.proximo ? new Date(r.proximo) : null;
+      const fupDone = r.statusFup.includes('conclu') || r.statusFup.includes('realizad');
+      const atrasado = fupDate && !fupDone && daysBetween(new Date(fupDate), new Date(refDate)) > 0;
+      if(atrasado) fupAtrasados++;
+      return { lead:r.lead, ultima:r.ultima, dias, proximo:r.proximo, situacao:sit };
+    });
+    const cobertura = pct(trabalhados, carteira);
+    const situacaoCounts = { green:0, amber:0, red:0 };
+    clientes.forEach(c => situacaoCounts[c.situacao]++);
+    clientes.sort((a,b) => {
+      const order = { red:0, amber:1, green:2 };
+      return order[a.situacao]-order[b.situacao];
+    });
+    return { nome, carteira, trabalhados, semInteracao, fupAtrasados, interacoes, cobertura, clientes, situacaoCounts };
+  }).sort((a,b) => b.carteira - a.carteira);
+
+  const coberturaGeral = pct(totalTrabalhados, totalLeads);
+
+  return {
+    refDate,
+    totals: { totalLeads, totalTrabalhados, totalSemInteracao, totalFupAtrasados, totalInteracoes, coberturaGeral },
+    vendedores
+  };
+}
+
+/* ======================================================================
+   RENDER — helpers
+====================================================================== */
+function goTo(tab){
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab===tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-'+tab));
+  const titles = {
+    geral: ['Gestão da Carteira Comercial','Acompanhamento de atividade e cobertura da carteira'],
+    individual: ['Visão Individual','Desempenho detalhado por comercial'],
+    evolucao: ['Evolução','Histórico e comparativo semanal da cobertura'],
+    atualizar: ['Atualizar Base','Importe a exportação semanal do CRM']
+  };
+  document.getElementById('pageTitle').textContent = titles[tab][0];
+  document.getElementById('pageSubtitle').textContent = titles[tab][1];
+  document.getElementById('topbarRight').style.visibility = tab==='atualizar' ? 'hidden' : 'visible';
+}
+document.querySelectorAll('.nav-item').forEach(n => n.addEventListener('click', () => goTo(n.dataset.tab)));
+
+function renderKpiGrid(stats){
+  const t = stats.totals;
+  const covClass = coberturaClass(t.coberturaGeral);
+  document.getElementById('kpiGrid').innerHTML = `
+    ${kpiCard('Carteira total', t.totalLeads, '')}
+    ${kpiCard('Clientes trabalhados', t.totalTrabalhados, `${pct(t.totalTrabalhados,t.totalLeads)}% da carteira`)}
+    ${kpiCard('Cobertura geral', t.coberturaGeral+'%', '', covClass)}
+    ${kpiCard('Sem interação', t.totalSemInteracao, '')}
+    ${kpiCard('Follow-ups atrasados', t.totalFupAtrasados, '')}
+    ${kpiCard('Interações registradas', t.totalInteracoes, '')}
+  `;
+}
+function kpiCard(label, value, sub, accentClass){
+  const cls = accentClass==='red' ? 'accent' : accentClass==='amber' ? '' : '';
+  const color = accentClass==='green' ? 'style="color:var(--green)"' : accentClass==='amber' ? 'style="color:var(--amber)"' : accentClass==='red' ? 'style="color:var(--red)"' : '';
+  return `<div class="kpi-card"><div class="kpi-label">${label}</div><div class="kpi-value" ${color}>${value}</div>${sub?`<div class="kpi-sub">${sub}</div>`:''}</div>`;
+}
+
+function renderRanking(stats){
+  document.getElementById('rankingBody').innerHTML = stats.vendedores.map(v => {
+    const cls = coberturaClass(v.cobertura);
+    return `<tr class="row-click" onclick="selectVendedorAndGo('${escapeHtml(v.nome).replace(/'/g,"\\'")}')">
+      <td>${escapeHtml(v.nome)}</td>
+      <td class="num">${v.carteira}</td>
+      <td class="num">${v.trabalhados}</td>
+      <td class="num">${v.semInteracao}</td>
+      <td class="num">${v.fupAtrasados}</td>
+      <td class="num"><span class="semaforo txt-${cls}"><span class="dot dot-${cls}"></span>${v.cobertura}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAlerts(stats, prevStats){
+  const alerts = [];
+  const abaixo = stats.vendedores.filter(v => v.cobertura < THRESH.coberturaAtencao).length;
+  if(abaixo>0) alerts.push({dot:'red', text:`${abaixo} comercial(is) estão abaixo de ${THRESH.coberturaAtencao}% de cobertura.`});
+  if(stats.totals.totalFupAtrasados>0) alerts.push({dot:'red', text:`${stats.totals.totalFupAtrasados} follow-ups estão atrasados.`});
+  if(stats.totals.totalSemInteracao>0) alerts.push({dot:'amber', text:`${stats.totals.totalSemInteracao} clientes estão sem interação dentro do período recomendado.`});
+  if(prevStats){
+    const delta = stats.totals.coberturaGeral - prevStats.totals.coberturaGeral;
+    if(delta !== 0){
+      alerts.push({dot: delta>0?'green':'red', text:`A cobertura geral da equipe ${delta>0?'evoluiu':'caiu'} ${Math.abs(delta)} p.p. em relação à semana anterior.`});
+    } else {
+      alerts.push({dot:'amber', text:'A cobertura geral da equipe se manteve estável em relação à semana anterior.'});
+    }
+  }
+  if(alerts.length===0) alerts.push({dot:'green', text:'Nenhum ponto crítico identificado nesta semana.'});
+  document.getElementById('alertList').innerHTML = alerts.map(a =>
+    `<div class="alert-item"><span class="dot dot-${a.dot}"></span><span>${a.text}</span></div>`
+  ).join('');
+}
+
+function renderMiniSpark(series){
+  const wrap = document.getElementById('miniSpark');
+  if(series.length < 2){ wrap.innerHTML = '<p style="color:var(--gray-400);font-size:12px;margin:0;">Histórico insuficiente — importe mais semanas para ver a evolução.</p>'; return; }
+  wrap.innerHTML = buildLineChartSvg(series.map(s=>({label:fmtDate(new Date(s.date)), value:s.coberturaGeral})), 260, 90, true);
+}
+
+/* ---------- individual ---------- */
+function renderIndividual(stats){
+  const nomes = stats.vendedores.map(v=>v.nome);
+  let nome = state.selected !== '__todos__' ? state.selected : nomes[0];
+  const v = stats.vendedores.find(x => x.nome === nome);
+  if(!v){ document.getElementById('individualContent').style.display='none'; document.getElementById('individualEmpty').style.display='block'; return; }
+  document.getElementById('individualEmpty').style.display='none';
+  document.getElementById('individualContent').style.display='block';
+
+  document.getElementById('indivName').textContent = v.nome;
+  document.getElementById('indivRef').textContent = 'Referência: ' + fmtDate(new Date(stats.refDate));
+
+  const covClass = coberturaClass(v.cobertura);
+  document.getElementById('indivKpiGrid').innerHTML = `
+    ${kpiCard('Carteira', v.carteira, '')}
+    ${kpiCard('Trabalhados', v.trabalhados, '')}
+    ${kpiCard('Cobertura', v.cobertura+'%', '', covClass)}
+    ${kpiCard('Follow-ups atrasados', v.fupAtrasados, '')}
+    ${kpiCard('Interações', v.interacoes, '')}
+  `;
+
+  document.getElementById('situacaoGrid').innerHTML = `
+    <div class="situacao-card sit-green"><div class="num">${v.situacaoCounts.green}</div><div class="lbl">🟢 Em dia</div></div>
+    <div class="situacao-card sit-amber"><div class="num">${v.situacaoCounts.amber}</div><div class="lbl">🟡 Atenção</div></div>
+    <div class="situacao-card sit-red"><div class="num">${v.situacaoCounts.red}</div><div class="lbl">🔴 Crítico</div></div>
+  `;
+
+  document.getElementById('clientesBody').innerHTML = v.clientes.map(c => {
+    const cls = c.situacao;
+    return `<tr>
+      <td>${escapeHtml(c.lead||'—')}</td>
+      <td>${c.ultima ? fmtDate(new Date(c.ultima)) : '—'}</td>
+      <td class="num">${c.dias===null?'—':c.dias}</td>
+      <td>${c.proximo ? fmtDate(new Date(c.proximo)) : '—'}</td>
+      <td><span class="pill pill-${cls}">${situLabel(cls)}</span></td>
+    </tr>`;
+  }).join('');
+}
+function selectVendedorAndGo(nome){
+  state.selected = nome;
+  document.getElementById('comercialFilter').value = nome;
+  goTo('individual');
+  renderAll();
+}
+
+/* ---------- evolução ---------- */
+function renderEvolucao(){
+  if(state.series.length < 1){
+    document.getElementById('evolucaoEmpty').style.display='block';
+    document.getElementById('evolucaoContent').style.display='none';
+    return;
+  }
+  document.getElementById('evolucaoEmpty').style.display='none';
+  document.getElementById('evolucaoContent').style.display='block';
+
+  const isVendedor = state.selected !== '__todos__';
+  document.getElementById('evoTitle').textContent = isVendedor
+    ? `Evolução da cobertura — ${state.selected}`
+    : 'Evolução da cobertura — equipe';
+
+  const points = state.series.map(s => {
+    const val = isVendedor
+      ? (s.porVendedor[state.selected] !== undefined ? s.porVendedor[state.selected] : null)
+      : s.coberturaGeral;
+    return { label: fmtDate(new Date(s.date)), value: val };
+  }).filter(p => p.value !== null);
+
+  document.getElementById('chartWrap').innerHTML = points.length >= 2
+    ? buildLineChartSvg(points, 760, 240, false)
+    : '<p style="color:var(--gray-400);font-size:13px;">É necessário pelo menos duas semanas de histórico para plotar a evolução.</p>';
+
+  // comparativo semana atual x anterior
+  const compareEl = document.getElementById('compareRow');
+  if(state.series.length >= 2){
+    const atual = state.series[state.series.length-1];
+    const anterior = state.series[state.series.length-2];
+    const curCov = isVendedor ? atual.porVendedor[state.selected] : atual.coberturaGeral;
+    const prevCov = isVendedor ? anterior.porVendedor[state.selected] : anterior.coberturaGeral;
+    const curSem = isVendedor ? (atual.semInteracaoPorVendedor[state.selected]||0) : atual.semInteracaoTotal;
+    const prevSem = isVendedor ? (anterior.semInteracaoPorVendedor[state.selected]||0) : anterior.semInteracaoTotal;
+    const curFup = isVendedor ? (atual.fupAtrasadosPorVendedor[state.selected]||0) : atual.fupAtrasadosTotal;
+    const prevFup = isVendedor ? (anterior.fupAtrasadosPorVendedor[state.selected]||0) : anterior.fupAtrasadosTotal;
+    compareEl.innerHTML = [
+      compareCard('Cobertura', prevCov, curCov, '%', false),
+      compareCard('Clientes sem interação', prevSem, curSem, '', true),
+      compareCard('Follow-ups atrasados', prevFup, curFup, '', true)
+    ].join('');
+  } else {
+    compareEl.innerHTML = '<p style="color:var(--gray-400);font-size:13px;">Comparativo disponível a partir da segunda semana de importação.</p>';
+  }
+}
+function compareCard(label, prev, cur, suffix, lowerIsBetter){
+  if(prev===undefined||cur===undefined) return `<div class="compare-card"><div class="lbl">${label}</div><div class="compare-vals"><span class="to">—</span></div></div>`;
+  const delta = cur - prev;
+  const good = lowerIsBetter ? delta <= 0 : delta >= 0;
+  const cls = delta===0 ? 'flat' : (good ? 'up' : 'down');
+  const sign = delta>0 ? '+' : '';
+  return `<div class="compare-card">
+    <div class="lbl">${label}</div>
+    <div class="compare-vals">
+      <span class="from">${prev}${suffix}</span>
+      <span class="to">${cur}${suffix}</span>
+      <span class="delta ${cls}">${sign}${delta}${suffix}</span>
+    </div>
+  </div>`;
+}
+
+/* ---------- svg line chart (no libs) ---------- */
+function buildLineChartSvg(points, W, H, mini){
+  const pad = mini ? {t:8,r:8,b:18,l:8} : {t:20,r:20,b:34,l:38};
+  const w = W - pad.l - pad.r, h = H - pad.t - pad.b;
+  const maxV = 100, minV = 0;
+  const stepX = points.length>1 ? w/(points.length-1) : 0;
+  const xy = points.map((p,i) => ({
+    x: pad.l + i*stepX,
+    y: pad.t + h - ((p.value-minV)/(maxV-minV))*h,
+    ...p
+  }));
+  const path = xy.map((p,i) => (i===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+  const areaPath = path + ` L${xy[xy.length-1].x.toFixed(1)},${(pad.t+h).toFixed(1)} L${xy[0].x.toFixed(1)},${(pad.t+h).toFixed(1)} Z`;
+
+  let gridLines = '';
+  let axisLabels = '';
+  if(!mini){
+    [0,25,50,75,100].forEach(v => {
+      const y = pad.t + h - (v/100)*h;
+      gridLines += `<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="#EFEFEF" stroke-width="1"/>`;
+      axisLabels += `<text x="${pad.l-8}" y="${y+4}" font-size="10" fill="#9A9A9A" text-anchor="end" font-family="Poppins">${v}%</text>`;
+    });
+    xy.forEach(p => {
+      axisLabels += `<text x="${p.x}" y="${H-8}" font-size="10" fill="#9A9A9A" text-anchor="middle" font-family="Poppins">${p.label}</text>`;
+    });
+  }
+
+  const dots = xy.map(p => `<circle cx="${p.x}" cy="${p.y}" r="${mini?2.5:4}" fill="#E22446" stroke="white" stroke-width="1.5"/>`).join('');
+  const valueLabels = mini ? '' : xy.map(p => `<text x="${p.x}" y="${p.y-10}" font-size="11" fill="#111111" text-anchor="middle" font-family="Sora" font-weight="600">${p.value}%</text>`).join('');
+
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${mini?90:240}" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E22446" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#E22446" stop-opacity="0"/>
+    </linearGradient></defs>
+    ${gridLines}
+    <path d="${areaPath}" fill="url(#grad)" stroke="none"/>
+    <path d="${path}" fill="none" stroke="#E22446" stroke-width="${mini?1.8:2.4}" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dots}
+    ${valueLabels}
+    ${axisLabels}
+  </svg>`;
+}
+
+/* ======================================================================
+   MASTER RENDER
+====================================================================== */
+function renderFilterOptions(){
+  const sel = document.getElementById('comercialFilter');
+  const current = state.current;
+  const nomes = current ? current.stats.vendedores.map(v=>v.nome) : [];
+  sel.innerHTML = `<option value="__todos__">Todos os comerciais</option>` +
+    nomes.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  sel.value = state.selected;
+}
+document.getElementById('comercialFilter').addEventListener('change', e => {
+  state.selected = e.target.value;
+  renderAll();
+});
+
+function renderAll(){
+  if(!state.current){ return; }
+  const stats = state.current.stats;
+  const prevStats = state.previous ? state.previous.stats : null;
+
+  document.getElementById('geralEmpty').style.display='none';
+  document.getElementById('geralContent').style.display='block';
+  renderKpiGrid(stats);
+  renderRanking(stats);
+  renderAlerts(stats, prevStats);
+  renderMiniSpark(state.series);
+
+  renderIndividual(stats);
+  renderEvolucao();
+
+  document.getElementById('updateBadge').textContent = 'Última atualização: ' + fmtDate(new Date(stats.refDate));
+  document.getElementById('sidebarStatus').innerHTML = `<span class="dot"></span>Base atualizada — ${fmtDate(new Date(stats.refDate))}`;
+}
+
+function renderHistoryTable(){
+  const tbody = document.getElementById('historyBody');
+  if(state.index.length===0){
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--gray-400);">Nenhuma importação registrada ainda.</td></tr>';
+    return;
+  }
+  const idxDesc = [...state.index].sort((a,b) => a.date < b.date ? 1 : -1);
+  tbody.innerHTML = idxDesc.map(e => `
+    <tr>
+      <td>${fmtDate(new Date(e.date))}</td>
+      <td>${escapeHtml(e.filename)}</td>
+      <td class="num">${e.count}</td>
+      <td><span class="pill pill-green">✓ Atualizado</span></td>
+      <td><button class="btn-remove" onclick="confirmDeleteSnapshot('${e.date}')">Remover</button></td>
+    </tr>
+  `).join('');
+}
+
+async function confirmDeleteSnapshot(dateStr){
+  const label = fmtDate(new Date(dateStr));
+  const ok = confirm(`Remover a atualização de ${label}?\n\nIsso apaga a planilha e todos os indicadores calculados a partir dela. Essa ação não pode ser desfeita.`);
+  if(!ok) return;
+  state.index = await deleteSnapshot(dateStr);
+  renderHistoryTable();
+  state.current = null;
+  state.previous = null;
+  state.series = [];
+  await boot();
+  renderAll();
+}
+
+/* ======================================================================
+   BOOT: load history + rebuild series + render latest
+====================================================================== */
+async function buildSeriesFromIndex(){
+  const idxAsc = [...state.index].sort((a,b) => a.date < b.date ? -1 : 1);
+  const series = [];
+  for(const entry of idxAsc){
+    const rows = await loadSnapshot(entry.date);
+    const stats = buildSnapshotStats(rows, entry.date);
+    const porVendedor = {}, semInteracaoPorVendedor = {}, fupAtrasadosPorVendedor = {};
+    stats.vendedores.forEach(v => {
+      porVendedor[v.nome] = v.cobertura;
+      semInteracaoPorVendedor[v.nome] = v.semInteracao;
+      fupAtrasadosPorVendedor[v.nome] = v.fupAtrasados;
+    });
+    series.push({
+      date: entry.date,
+      coberturaGeral: stats.totals.coberturaGeral,
+      semInteracaoTotal: stats.totals.totalSemInteracao,
+      fupAtrasadosTotal: stats.totals.totalFupAtrasados,
+      porVendedor, semInteracaoPorVendedor, fupAtrasadosPorVendedor
+    });
+  }
+  return series;
+}
+
+async function boot(){
+  state.index = await loadIndex();
+  renderHistoryTable();
+  if(state.index.length === 0){
+    state.current = null; state.previous = null; state.series = [];
+    document.getElementById('geralContent').style.display='none';
+    document.getElementById('geralEmpty').style.display='block';
+    document.getElementById('individualContent').style.display='none';
+    document.getElementById('individualEmpty').style.display='block';
+    document.getElementById('evolucaoContent').style.display='none';
+    document.getElementById('evolucaoEmpty').style.display='block';
+    document.getElementById('updateBadge').textContent = 'Nenhuma atualização ainda';
+    document.getElementById('sidebarStatus').innerHTML = '<span class="dot" style="background:var(--gray-400);"></span>Sem base carregada';
+    renderFilterOptions();
+    return;
+  }
+
+  const idxDesc = [...state.index].sort((a,b) => a.date < b.date ? 1 : -1);
+  const latest = idxDesc[0];
+  const prev = idxDesc[1];
+
+  const latestRows = await loadSnapshot(latest.date);
+  state.current = { refDate: latest.date, stats: buildSnapshotStats(latestRows, latest.date) };
+
+  if(prev){
+    const prevRows = await loadSnapshot(prev.date);
+    state.previous = { refDate: prev.date, stats: buildSnapshotStats(prevRows, prev.date) };
+  }
+
+  state.series = await buildSeriesFromIndex();
+  renderFilterOptions();
+  renderAll();
+}
+
+/* ======================================================================
+   UPLOAD / VALIDATION FLOW
+====================================================================== */
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault(); dropzone.classList.remove('drag');
+  if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => { if(e.target.files.length) handleFile(e.target.files[0]); });
+
+function handleFile(file){
+  document.getElementById('dzTitle').textContent = 'Lendo ' + file.name + '…';
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try{
+      const wb = XLSX.read(new Uint8Array(evt.target.result), { type:'array', cellDates:true });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+      if(rawRows.length === 0){ showValidation({ok:false, msgs:['A planilha parece estar vazia.']}); return; }
+      const map = mapHeaders(rawRows[0]);
+      processUpload(rawRows, map, file.name);
+    }catch(err){
+      showValidation({ok:false, msgs:['Não foi possível ler o arquivo. Confirme se é um .xlsx/.xls válido.']});
+    }
+    document.getElementById('dzTitle').textContent = 'Arraste a planilha aqui ou clique para selecionar';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function processUpload(rawRows, map, filename){
+  const missingCols = [];
+  if(!map.responsavel) missingCols.push('Responsável');
+  // data_ref is checked after fallback logic below
+
+  const rows = rawRows.map(r => processRow(r, map, null));
+  const semResponsavel = rows.filter(r => !r.responsavel).length;
+  const invalidUltima = rawRows.filter((r,i) => map.ultima_interacao && r[map.ultima_interacao] && !rows[i].ultima).length;
+
+  // detect data de referência: use column if present, else most common date, else ask user
+  let refDateGuess = null;
+  if(map.data_ref){
+    const counts = {};
+    rows.forEach(r => { if(r.refDate) { const k = dateKey(r.refDate); counts[k] = (counts[k]||0)+1; } });
+    const best = Object.keys(counts).sort((a,b) => counts[b]-counts[a])[0];
+    if(best) refDateGuess = best;
+  }
+
+  // duplicates: same lead + responsavel appearing more than once
+  const seen = {};
+  let dup = 0;
+  rows.forEach(r => {
+    const k = norm(r.lead)+'|'+norm(r.responsavel);
+    seen[k] = (seen[k]||0)+1;
+  });
+  Object.values(seen).forEach(c => { if(c>1) dup += (c-1); });
+
+  const msgs = [];
+  let ok = true;
+  if(missingCols.length){ msgs.push(`Coluna(s) obrigatória(s) não encontrada(s): ${missingCols.join(', ')}.`); ok = false; }
+  if(semResponsavel>0){ msgs.push(`${semResponsavel} lead(s) sem responsável definido.`); }
+  if(invalidUltima>0){ msgs.push(`${invalidUltima} data(s) de última interação não puderam ser interpretadas.`); }
+  if(dup>0){ msgs.push(`${dup} registro(s) duplicado(s) (mesmo lead + mesmo responsável).`); }
+  if(!map.data_ref){ msgs.push('Coluna "Data de Referência" não encontrada — informe a data manualmente abaixo.'); }
+
+  state.pendingRows = rows;
+  state.pendingFilename = filename;
+  state.pendingRefGuess = refDateGuess;
+
+  showValidation({ ok, msgs, count: rawRows.length });
+
+  document.getElementById('refDateRow').style.display = 'flex';
+  document.getElementById('refDateInput').value = refDateGuess || new Date().toISOString().slice(0,10);
+}
+
+function showValidation(res){
+  const el = document.getElementById('validationOutput');
+  if(res.msgs && res.msgs.length){
+    const hasErr = !res.ok;
+    el.innerHTML = `<div class="validation-box ${hasErr?'validation-err':'validation-warn'}">
+      ${hasErr ? '⚠️ <b>Atenção — corrija antes de atualizar:</b>' : '⚠️ <b>Aviso:</b>'}<br>
+      ${res.msgs.map(m=>'• '+m).join('<br>')}
+      ${res.count ? `<br><br>${res.count} registros lidos da planilha.` : ''}
+    </div>`;
+  } else {
+    el.innerHTML = `<div class="validation-box validation-ok">✓ Planilha validada com sucesso — ${res.count||''} registros prontos para importar.</div>`;
+  }
+}
+
+document.getElementById('confirmImportBtn').addEventListener('click', async () => {
+  if(!state.pendingRows){ return; }
+  const refDate = document.getElementById('refDateInput').value;
+  if(!refDate){ alert('Informe a data de referência.'); return; }
+
+  const rowsWithRef = state.pendingRows.map(r => ({ ...r, refDate: r.refDate || refDate }));
+  const btn = document.getElementById('confirmImportBtn');
+  btn.textContent = 'Atualizando…'; btn.disabled = true;
+
+  state.index = await saveSnapshot(refDate, rowsWithRef, state.pendingFilename);
+  renderHistoryTable();
+
+  state.pendingRows = null;
+  document.getElementById('refDateRow').style.display = 'none';
+  document.getElementById('validationOutput').innerHTML = `<div class="validation-box validation-ok">✓ Base atualizada com sucesso para ${fmtDate(new Date(refDate))}.</div>`;
+  btn.textContent = 'Atualizar Dashboard'; btn.disabled = false;
+
+  await boot();
+  goTo('geral');
+});
+
+boot();
+</script>
+</body>
+</html>
