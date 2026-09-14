@@ -433,6 +433,25 @@ const THRESH = {
 function stripAccents(s){ return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 function norm(s){ return stripAccents(s).toLowerCase().trim().replace(/\s+/g,' '); }
 
+// Algumas exporta\u00e7\u00f5es desse CRM salvam caracteres acentuados como entidades HTML literais
+// dentro da pr\u00f3pria c\u00e9lula (ex: "Mois&#xE9;s" em vez de "Mois\u00e9s"). Decodifica usando o
+// parser HTML nativo do navegador, que cobre entidades num\u00e9ricas e nomeadas.
+const _entityDecoder = document.createElement('textarea');
+function decodeHtmlEntities(s){
+  if(typeof s !== 'string' || s.indexOf('&') === -1) return s;
+  _entityDecoder.innerHTML = s;
+  return _entityDecoder.value;
+}
+function decodeRowEntities(row){
+  const out = {};
+  Object.keys(row).forEach(k => {
+    let v = row[k];
+    if(typeof v === 'string') v = decodeHtmlEntities(v);
+    out[decodeHtmlEntities(k)] = v;
+  });
+  return out;
+}
+
 const FIELD_ALIASES = {
   lead: ['lead/cliente','lead cliente','lead','cliente','nome'],
   responsavel: ['responsavel','vendedor','comercial','atendente','sdr','consultor','consultora','executivo','executivo de vendas'],
@@ -1064,7 +1083,7 @@ function handleFile(file){
     try{
       const wb = XLSX.read(new Uint8Array(evt.target.result), { type:'array', cellDates:true });
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+      const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: null }).map(decodeRowEntities);
       if(rawRows.length === 0){ showValidation({ok:false, msgs:['A planilha parece estar vazia.']}); return; }
       const map = mapHeaders(rawRows[0]);
       processUpload(rawRows, map, file.name);
