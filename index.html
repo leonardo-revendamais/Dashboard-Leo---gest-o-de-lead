@@ -334,6 +334,10 @@
           <p>Importe a planilha semanal para visualizar o desempenho individual de cada comercial.</p>
           <button class="btn btn-primary" onclick="goTo('atualizar')">Atualizar Base</button>
         </div>
+        <div id="individualPick" class="empty-state" style="display:none;">
+          <h3>Selecione um comercial</h3>
+          <p>Esta tela mostra a carteira de uma pessoa por vez. Use o filtro "Todos os comerciais" no topo da página para escolher quem você quer ver.</p>
+        </div>
         <div id="individualContent" style="display:none;">
           <div class="card" style="margin-bottom:16px;">
             <div class="indiv-header">
@@ -590,7 +594,18 @@ async function saveSnapshot(dateStr, rows, filename){
 }
 async function loadSnapshot(dateStr){
   const raw = lsRead('snapshot:' + dateStr);
-  try{ return raw ? JSON.parse(raw) : []; }catch(e){ return []; }
+  try{
+    const rows = raw ? JSON.parse(raw) : [];
+    // Corrige retroativamente snapshots salvos antes da correção de entidades HTML
+    // (ex: "Mois&#xE9;s"), sem exigir que o usuário reimporte a planilha.
+    rows.forEach(r => {
+      if(typeof r.lead === 'string') r.lead = decodeHtmlEntities(r.lead);
+      if(typeof r.responsavel === 'string') r.responsavel = decodeHtmlEntities(r.responsavel);
+      if(typeof r.statusLead === 'string') r.statusLead = decodeHtmlEntities(r.statusLead);
+      if(typeof r.conversao === 'string') r.conversao = decodeHtmlEntities(r.conversao);
+    });
+    return rows;
+  }catch(e){ return []; }
 }
 async function deleteSnapshot(dateStr){
   lsRemove('snapshot:' + dateStr);
@@ -787,9 +802,14 @@ function renderMiniSpark(series){
 
 /* ---------- individual ---------- */
 function renderIndividual(stats){
-  const nomes = stats.vendedores.map(v=>v.nome);
-  let nome = state.selected !== '__todos__' ? state.selected : nomes[0];
-  const v = stats.vendedores.find(x => x.nome === nome);
+  if(state.selected === '__todos__'){
+    document.getElementById('individualEmpty').style.display='none';
+    document.getElementById('individualContent').style.display='none';
+    document.getElementById('individualPick').style.display='block';
+    return;
+  }
+  document.getElementById('individualPick').style.display='none';
+  const v = stats.vendedores.find(x => x.nome === state.selected);
   if(!v){ document.getElementById('individualContent').style.display='none'; document.getElementById('individualEmpty').style.display='block'; return; }
   document.getElementById('individualEmpty').style.display='none';
   document.getElementById('individualContent').style.display='block';
@@ -1036,6 +1056,7 @@ async function boot(){
     document.getElementById('geralContent').style.display='none';
     document.getElementById('geralEmpty').style.display='block';
     document.getElementById('individualContent').style.display='none';
+    document.getElementById('individualPick').style.display='none';
     document.getElementById('individualEmpty').style.display='block';
     document.getElementById('evolucaoContent').style.display='none';
     document.getElementById('evolucaoEmpty').style.display='block';
