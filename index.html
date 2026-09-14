@@ -482,15 +482,18 @@ function toDate(val){
     return null;
   }
   const str = val.toString().trim();
-  // dd/mm/yyyy
-  let m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  // dd/mm/yyyy, opcionalmente seguido de hora (dd/mm/yyyy HH:mm[:ss]) — muito comum em
+  // exportações de CRM onde a célula vem como texto em vez de data nativa do Excel.
+  // Nunca cai no parser nativo do JS para esse formato: com dia <=12 ele o interpretaria
+  // como mm/dd (formato americano), trocando dia e mês silenciosamente.
+  let m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
   if(m){
-    let [,dd,mm,yyyy] = m;
+    let [,dd,mm,yyyy,hh,mi,ss] = m;
     if(yyyy.length===2) yyyy = '20'+yyyy;
-    const d = new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd));
+    const d = new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd), hh?parseInt(hh):0, mi?parseInt(mi):0, ss?parseInt(ss):0);
     return isNaN(d) ? null : d;
   }
-  // yyyy-mm-dd
+  // yyyy-mm-dd, opcionalmente com hora (ISO-like)
   m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
   if(m){
     const [,yyyy,mm,dd] = m;
