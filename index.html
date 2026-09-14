@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Gestão da Carteira Comercial — Revenda Mais</title>
+<title>Gestão de Leads — Revenda Mais</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -285,11 +285,11 @@
   <div class="main">
     <div class="topbar">
       <div>
-        <h1 id="pageTitle">Gestão da Carteira Comercial</h1>
+        <h1 id="pageTitle">Gestão de Leads</h1>
         <p id="pageSubtitle">Acompanhamento de atividade e cobertura da carteira</p>
       </div>
       <div class="topbar-right" id="topbarRight">
-        <select class="filter" id="comercialFilter">
+        <select class="filter" id="comercialFilter" style="display:none;">
           <option value="__todos__">Todos os comerciais</option>
         </select>
         <span class="badge-update" id="updateBadge">Nenhuma atualização ainda</span>
@@ -731,7 +731,7 @@ function goTo(tab){
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab===tab));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-'+tab));
   const titles = {
-    geral: ['Gestão da Carteira Comercial','Acompanhamento de atividade e cobertura da carteira'],
+    geral: ['Gestão de Leads','Acompanhamento de atividade e cobertura da carteira'],
     individual: ['Visão Individual','Desempenho detalhado por comercial'],
     evolucao: ['Evolução','Histórico e comparativo semanal da cobertura'],
     atualizar: ['Atualizar Base','Importe a exportação semanal do CRM']
@@ -739,6 +739,9 @@ function goTo(tab){
   document.getElementById('pageTitle').textContent = titles[tab][0];
   document.getElementById('pageSubtitle').textContent = titles[tab][1];
   document.getElementById('topbarRight').style.visibility = tab==='atualizar' ? 'hidden' : 'visible';
+  // O filtro por comercial só faz sentido nas telas que exibem dados de uma pessoa por vez
+  // (Visão Individual e Evolução) — na Visão Geral o resultado já é de toda a equipe.
+  document.getElementById('comercialFilter').style.display = (tab==='individual' || tab==='evolucao') ? '' : 'none';
 }
 document.querySelectorAll('.nav-item').forEach(n => n.addEventListener('click', () => goTo(n.dataset.tab)));
 
