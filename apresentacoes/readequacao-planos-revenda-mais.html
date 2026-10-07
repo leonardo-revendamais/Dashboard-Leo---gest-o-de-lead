@@ -133,6 +133,27 @@
   .reason .hl p{font-family:'Poppins';font-weight:600;font-size:clamp(15px,1.35vw,18px);color:var(--black);line-height:1.45;letter-spacing:-.01em}
   .reason .hl h4{color:var(--red)}
 
+  /* Faixa de negociação */
+  .val.new .money.mid{font-size:clamp(44px,4.6vw,68px)}
+  .slide.p05 .compare{margin-top:30px}
+  .slide.p05 .val{padding:24px 30px}
+  .slide.p05 .reason{margin-top:20px}
+  .slide.p05 .reason .box{padding:18px 24px}
+  .range{margin-top:18px}
+  .range-track{position:relative;height:10px;border-radius:10px;background:linear-gradient(90deg,var(--red-soft),var(--red))}
+  .range-track::before,.range-track::after{content:"";position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:var(--white);border:3px solid var(--red);transform:translateY(-50%)}
+  .range-track::before{left:-2px;border-color:#f08a9c}
+  .range-track::after{right:-2px}
+  .range-labels{display:flex;justify-content:space-between;margin-top:12px;font-size:13px;color:var(--g500)}
+  .range-labels b{display:block;font-family:'Poppins';font-weight:700;font-size:16px;color:var(--black);letter-spacing:-.01em}
+  .range-labels div:last-child{text-align:right}
+  .range-labels div:last-child b{color:var(--red)}
+  .range-note{margin-top:14px;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--red)}
+  .steps{list-style:none;display:flex;flex-direction:column;gap:9px;margin-top:4px}
+  .steps li{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.5;color:var(--g700)}
+  .steps li span{flex:none;width:24px;height:24px;border-radius:7px;background:var(--black);color:#fff;display:grid;place-items:center;font-family:'Poppins';font-weight:700;font-size:12px;margin-top:1px}
+  .steps li b{color:var(--black);font-weight:600}
+
   /* Plano NF-e hero */
   .hero-val{display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:center;margin-top:40px}
   .hero-card{border:2px solid var(--red);border-radius:24px;padding:40px 44px;position:relative;box-shadow:0 30px 60px -36px rgba(226,36,70,.45)}
@@ -212,6 +233,13 @@
     .compare,.pillars,.table,.hero-val,.balance{margin-top:28px}
     .reason{margin-top:18px}
     .quote{margin-top:22px}
+    .slide.p05 .compare{margin-top:18px}
+    .slide.p05 .reason{margin-top:14px}
+    .slide.p05 .val{padding:18px 28px}
+    .slide.p05 .reason .box{padding:14px 22px}
+    .slide.p05 .range{margin-top:12px}
+    .slide.p05 .val .unit{margin-top:6px}
+    .slide.p05 .title{font-size:clamp(30px,3.6vw,46px)}
   }
 </style>
 </head>
@@ -329,7 +357,7 @@
   </section>
 
   <!-- 05 PLANO 0.5 -->
-  <section class="slide">
+  <section class="slide p05">
     <div class="inner">
       <div class="eyebrow r" style="--d:0">Plano · 03</div>
       <h2 class="title r" style="--d:1">Plano 0.5</h2>
@@ -340,19 +368,32 @@
         </div>
         <div class="arrow r" style="--d:3"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
         <div class="val new r" style="--d:4">
-          <div class="tag">NOVA DIRETRIZ</div>
-          <div class="lbl">Nova diretriz</div>
-          <div class="txt" style="font-size:clamp(24px,2.6vw,36px);color:var(--black)">Adequação à política comercial <span style="color:var(--red)">vigente</span></div>
+          <div class="tag">NOVA CONDIÇÃO</div>
+          <div class="lbl">Valor de referência</div>
+          <div class="money mid"><span class="cur">R$</span>550</div>
+          <div class="unit">por mês · política comercial vigente</div>
+          <div class="range">
+            <div class="range-track"></div>
+            <div class="range-labels">
+              <div><b>R$ 450</b>mínimo negociável</div>
+              <div><b>R$ 550</b>referência</div>
+            </div>
+            <div class="range-note">Margem de negociação · autonomia do vendedor</div>
+          </div>
         </div>
       </div>
       <div class="reason">
         <div class="box r" style="--d:5">
-          <h4><i></i>Motivo da atualização</h4>
-          <p>O Plano 0.5 faz parte de uma estrutura comercial anterior. A revisão reduz a diferença em relação ao modelo atual, sem desconsiderar a condição histórica do cliente.</p>
+          <h4><i></i>Como conduzir</h4>
+          <ol class="steps">
+            <li><span>1</span><div><b>Entender o uso:</b> o que a loja utiliza hoje (módulos, volume e recursos).</div></li>
+            <li><span>2</span><div><b>Apresentar a referência:</b> R$ 550/mês, conforme a política vigente.</div></li>
+            <li><span>3</span><div><b>Ajustar ao cenário:</b> negociar até R$ 450/mês de acordo com o uso da loja, com autonomia do vendedor.</div></li>
+          </ol>
         </div>
         <div class="box hl r" style="--d:6">
           <h4>Objetivo</h4>
-          <p>Atualizar a condição comercial preservando uma transição equilibrada para o cliente.</p>
+          <p>Adequar cada loja à política atual de forma personalizada: o valor final reflete o uso real do cliente, dentro da faixa de R$ 450 a R$ 550/mês.</p>
         </div>
       </div>
     </div>
@@ -399,7 +440,7 @@
         <div class="row head"><div>Serviço / Plano</div><div>Situação anterior</div><div>Nova condição</div></div>
         <div class="row"><div class="svc"><i></i>Emissão NF-e Unitária</div><div class="old">R$ 1,50/emissão</div><div class="new">R$ 2,50/emissão</div></div>
         <div class="row"><div class="svc"><i></i>CRM sem WhatsApp</div><div class="old">R$ 150,00/mês</div><div class="new">R$ 250,00/mês</div></div>
-        <div class="row"><div class="svc"><i></i>Plano 0.5</div><div class="old">Política anterior</div><div class="new txt">Adequação à política vigente</div></div>
+        <div class="row"><div class="svc"><i></i>Plano 0.5</div><div class="old">Política anterior</div><div class="new">R$ 450 a R$ 550/mês</div></div>
         <div class="row"><div class="svc"><i></i>Plano NF-e</div><div class="old">Condição anterior</div><div class="new">R$ 300,00/mês</div></div>
       </div>
       <div class="directive r" style="--d:3">
