@@ -168,6 +168,18 @@
   .eq-item small{font-size:13px;color:var(--g500)}
   .eq-plus{text-align:center;font-family:'Poppins';font-weight:700;color:var(--red);font-size:20px;line-height:1}
 
+  .slide.p06 .hero-card{padding:32px 38px}
+  .slide.p06 .hero-card .money{font-size:clamp(56px,6.6vw,100px)}
+  .slide.p06 .reason{margin-top:20px}
+  .plan-opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px}
+  .plan-opt{border-radius:14px;padding:16px 18px;background:var(--g100)}
+  .plan-opt.annual{background:var(--red-soft)}
+  .plan-opt .k{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--g500);margin-bottom:6px}
+  .plan-opt.annual .k{color:var(--red)}
+  .plan-opt b{display:block;font-family:'Poppins';font-weight:700;font-size:20px;letter-spacing:-.02em;color:var(--black)}
+  .plan-opt small{font-size:12.5px;color:var(--g700);line-height:1.4;display:block;margin-top:4px}
+  .row .new small{font-family:'Inter';font-weight:600;font-size:12.5px;color:var(--g700);display:block;margin-top:2px}
+
   /* Tabela */
   .table{margin-top:40px;border:1px solid var(--g200);border-radius:var(--radius);overflow:hidden}
   .row{display:grid;grid-template-columns:1.25fr 1fr 1.25fr;align-items:center}
@@ -239,6 +251,15 @@
     .slide.p05 .reason .box{padding:14px 22px}
     .slide.p05 .range{margin-top:12px}
     .slide.p05 .val .unit{margin-top:6px}
+    .slide.p06 .hero-val{margin-top:18px}
+    .slide.p06 .hero-card{padding:22px 32px}
+    .slide.p06 .hero-card .money{font-size:clamp(52px,5.4vw,76px)}
+    .slide.p06 .hero-card .unit{margin-top:6px;font-size:15px}
+    .slide.p06 .plan-opts{margin-top:14px}
+    .slide.p06 .plan-opt{padding:12px 16px}
+    .slide.p06 .reason{margin-top:14px}
+    .slide.p06 .reason .box{padding:14px 22px}
+    .slide.p06 .title{font-size:clamp(30px,3.6vw,46px)}
     .slide.p05 .title{font-size:clamp(30px,3.6vw,46px)}
   }
 </style>
@@ -400,7 +421,7 @@
   </section>
 
   <!-- 06 PLANO NF-e -->
-  <section class="slide">
+  <section class="slide p06">
     <div class="inner">
       <div class="eyebrow r" style="--d:0">Plano · 04</div>
       <h2 class="title r" style="--d:1">Plano NF-e</h2>
@@ -409,6 +430,10 @@
           <div class="lbl">Nova condição</div>
           <div class="money"><span class="cur">R$</span>300</div>
           <div class="unit">por mês · readequação à política comercial vigente</div>
+          <div class="plan-opts">
+            <div class="plan-opt"><div class="k">Mensal</div><b>R$ 300/mês</b><small>Valor da nova condição</small></div>
+            <div class="plan-opt annual"><div class="k">Anual</div><b>Até R$ 250/mês</b><small>Negociação com autonomia do vendedor</small></div>
+          </div>
         </div>
         <div class="equation">
           <div class="eq-item r" style="--d:3">
@@ -441,7 +466,7 @@
         <div class="row"><div class="svc"><i></i>Emissão NF-e Unitária</div><div class="old">R$ 1,50/emissão</div><div class="new">R$ 2,50/emissão</div></div>
         <div class="row"><div class="svc"><i></i>CRM sem WhatsApp</div><div class="old">R$ 150,00/mês</div><div class="new">R$ 250,00/mês</div></div>
         <div class="row"><div class="svc"><i></i>Plano 0.5</div><div class="old">Política anterior</div><div class="new">R$ 450 a R$ 550/mês</div></div>
-        <div class="row"><div class="svc"><i></i>Plano NF-e</div><div class="old">Condição anterior</div><div class="new">R$ 300,00/mês</div></div>
+        <div class="row"><div class="svc"><i></i>Plano NF-e</div><div class="old">Condição anterior</div><div class="new"><div>R$ 300,00/mês<small>Anual: até R$ 250,00/mês</small></div></div></div>
       </div>
       <div class="directive r" style="--d:3">
         <div class="badge">Diretriz comum</div>
